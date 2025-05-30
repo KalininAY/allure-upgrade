@@ -1,4 +1,6 @@
-package at;
+package at.allure.upgrade.core;
+
+import at.allure.upgrade.utils.ZipUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;

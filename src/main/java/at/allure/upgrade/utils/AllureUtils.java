@@ -1,4 +1,6 @@
-package at;
+package at.allure.upgrade.utils;
+
+import at.allure.upgrade.core.Zip;
 
 import java.util.Optional;
 

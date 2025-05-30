@@ -1,4 +1,4 @@
-package at;
+package at.allure.upgrade.core;
 
 import javax.swing.*;
 

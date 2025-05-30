@@ -1,10 +1,10 @@
-package at;
+package at.allure.upgrade.core;
+
+import at.allure.upgrade.utils.AllureUtils;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
@@ -13,22 +13,26 @@ public class ZipProcessorWindow extends JFrame {
     private JLabel statusLabel;
     private JButton selectFileButton;
     private JLabel successIcon;
-    private File selectedZipFile;
+    private File selectedFile;
 
-    public ZipProcessorWindow() {
+    {
+        init();
+    }
+
+    public void init() {
         initializeComponents();
         setupLayout();
         setupEventHandlers();
     }
 
     private void initializeComponents() {
-        setTitle("ZIP Processor");
+        setTitle("Let's upgrade your allure");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 200);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        selectFileButton = new JButton("Выбрать ZIP архив");
+        selectFileButton = new JButton("Выбрать ZIP архив с Allure");
         progressBar = new JProgressBar(0, 100);
         progressBar.setStringPainted(true);
         progressBar.setVisible(false);
@@ -59,12 +63,7 @@ public class ZipProcessorWindow extends JFrame {
     }
 
     private void setupEventHandlers() {
-        selectFileButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                selectZipFile();
-            }
-        });
+        selectFileButton.addActionListener(e -> selectZipFile());
     }
 
     private void selectZipFile() {
@@ -74,15 +73,19 @@ public class ZipProcessorWindow extends JFrame {
 
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
-            selectedZipFile = fileChooser.getSelectedFile();
+            selectedFile = fileChooser.getSelectedFile();
             processZipFile();
         }
+    }
+
+    private void print(String message) {
+        // TODO: вывести в "консоль"
     }
 
     private void processZipFile() {
         // Сброс состояния
         successIcon.setVisible(false);
-        selectFileButton.setEnabled(false);
+        selectFileButton.setVisible(false);
 
         // Показываем прогресс-бар
         progressBar.setVisible(true);
@@ -90,18 +93,46 @@ public class ZipProcessorWindow extends JFrame {
         statusLabel.setText("Проверка файла...");
 
         // Используем SwingWorker для выполнения в фоновом потоке
-        SwingWorker<Void, Integer> worker = new SwingWorker<Void, Integer>() {
+        SwingWorker<Void, Integer> worker = new SwingWorker<>() {
             @Override
             protected Void doInBackground() throws Exception {
-                // Валидация
-                Thread.sleep(500); // Имитация работы
-                if (!validZip()) {
-                    publish(-1); // Сигнал об ошибке валидации
+                print("Начало обработки файла " + selectedFile.getAbsolutePath() + "...");
+
+                Zip zip;
+                try {
+                    zip = new Zip(selectedFile.toPath());
+                } catch (Exception e) { // например, выбран не архив
+                    showError("Не удалось открыть архив, " + e.getMessage());
+                    init();
                     return null;
                 }
 
-                // Файл получен (10%)
+                // Файл получен (5%)
+                publish(5);
+                print("Файл распознан как архив");
+
+                if (!AllureUtils.isAllureZip(zip)) {
+                    showError("Выбранный архив не содержит аллюр");
+                    init();
+                    return null;
+
+                } else {
+                    String allureVersion = AllureUtils.parseAllureVersion(zip);
+                    print("В архиве найден Allure " + allureVersion + ", начинается модификация...");
+                }
+
+                // Исходный Allure получен (10%)
                 publish(10);
+
+                // TODO: add jar
+                // TODO: add static
+                // TODO: edit
+
+
+
+
+
+
                 Thread.sleep(500);
 
                 // Process (10% - 90%)
@@ -117,6 +148,11 @@ public class ZipProcessorWindow extends JFrame {
                 }
 
                 return null;
+            }
+
+            private void showError(String error) {
+                print(error);
+                JOptionPane.showMessageDialog(ZipProcessorWindow.this, error, "", JOptionPane.ERROR_MESSAGE);
             }
 
             @Override

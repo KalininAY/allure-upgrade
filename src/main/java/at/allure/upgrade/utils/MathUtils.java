@@ -1,4 +1,4 @@
-package at;
+package at.allure.upgrade.utils;
 
 import java.util.Comparator;
 import java.util.Optional;
