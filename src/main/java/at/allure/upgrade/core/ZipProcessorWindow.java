@@ -7,6 +7,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class ZipProcessorWindow extends JFrame {
     private JProgressBar progressBar;
@@ -93,7 +95,7 @@ public class ZipProcessorWindow extends JFrame {
         statusLabel.setText("Проверка файла...");
 
         // Используем SwingWorker для выполнения в фоновом потоке
-        SwingWorker<Void, Integer> worker = new SwingWorker<>() {
+        SwingWorker<Void, Integer> worker = new SwingWorker<Void, Integer>() {
             @Override
             protected Void doInBackground() throws Exception {
                 print("Начало обработки файла " + selectedFile.getAbsolutePath() + "...");
@@ -111,14 +113,14 @@ public class ZipProcessorWindow extends JFrame {
                 publish(5);
                 print("Файл распознан как архив");
 
-                if (!AllureUtils.isAllureZip(zip)) {
+                if (AllureUtils.isAllureZip(zip)) {
+                    String allureVersion = AllureUtils.parseAllureVersion(zip);
+                    print("В архиве найден Allure " + allureVersion + ", начинается модификация...");
+
+                } else {
                     showError("Выбранный архив не содержит аллюр");
                     init();
                     return null;
-
-                } else {
-                    String allureVersion = AllureUtils.parseAllureVersion(zip);
-                    print("В архиве найден Allure " + allureVersion + ", начинается модификация...");
                 }
 
                 // Исходный Allure получен (10%)
@@ -126,10 +128,17 @@ public class ZipProcessorWindow extends JFrame {
 
                 // TODO: add jar
                 // TODO: add static
-                // TODO: edit
+                Path pluginDir = Paths.get("src", "main", "resources", "resultiks-plugin");
+                zip.addDirectory(pluginDir);
 
+                // TODO: edit config
+                String pluginRow = "  - resultiks-plugin";
+                zip.update(
+                        Paths.get("config", "allure.yml"),
+                        content -> content.contains(pluginRow) ? content : content + "\n" + pluginRow
+                );
 
-
+                // TODO: edit other plugins
 
 
 
@@ -192,35 +201,6 @@ public class ZipProcessorWindow extends JFrame {
         worker.execute();
     }
 
-    // Метод валидации - здесь можно добавить свою логику
-    private boolean validZip() {
-        // Простая проверка - файл должен существовать и иметь расширение .zip
-        if (selectedZipFile == null || !selectedZipFile.exists()) {
-            return false;
-        }
-
-        String fileName = selectedZipFile.getName().toLowerCase();
-        if (!fileName.endsWith(".zip")) {
-            return false;
-        }
-
-        // Можно добавить дополнительные проверки
-        // Например, проверить, что файл действительно является ZIP архивом
-
-        return true; // Для демонстрации всегда возвращаем true
-    }
-
-    // Метод обработки - здесь можно добавить свою логику
-    private void process() {
-        // Здесь должна быть логика обработки файла
-        System.out.println("Processing file: " + selectedZipFile.getAbsolutePath());
-    }
-
-    // Метод создания ZIP - здесь можно добавить свою логику
-    private void zip() {
-        // Здесь должна быть логика создания ZIP архива
-        System.out.println("Creating zip from: " + selectedZipFile.getAbsolutePath());
-    }
 
     // Создание простой иконки галочки
     private ImageIcon createCheckIcon() {

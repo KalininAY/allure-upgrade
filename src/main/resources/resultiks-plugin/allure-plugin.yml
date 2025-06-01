@@ -1,0 +1,7 @@
+id: packages
+name: Resultiks aggregator
+description: The aggregator adds resultiks tab to the report
+extensions:
+  - bugbusters.plugins.allure.resultiks.ResultiksPlugin
+jsFiles:
+  - index.js

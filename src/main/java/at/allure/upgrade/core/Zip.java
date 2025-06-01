@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 public class Zip {
     public final Path path;
@@ -19,8 +20,21 @@ public class Zip {
         this.files = ZipUtils.readFiles(path);
     }
 
-    public Zip add(Path file) {
-        files.put(file.toString(), ZipUtils.readAllBytes(file));
+    public Zip addDirectory(Path dir) {
+        if (!Files.isDirectory(dir))
+            return this;
+        try (Stream<Path> pluginFiles = Files.list(pluginPath)) {
+            pluginFiles.filter(Files::isRegularFile).forEach(path -> {
+                String inZipName = path.relativize(pluginPath).toString();
+                zip.add(inZipName, path);
+            });
+        }
+        files.put(inZipName, ZipUtils.readAllBytes(file));
+        return this;
+    }
+
+    public Zip add(String inZipName, Path file) {
+        files.put(inZipName, ZipUtils.readAllBytes(file));
         return this;
     }
 
