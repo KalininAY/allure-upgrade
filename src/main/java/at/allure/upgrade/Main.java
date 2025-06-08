@@ -1,4 +1,6 @@
-package at.allure.upgrade.core;
+package at.allure.upgrade;
+
+import at.allure.upgrade.core.ZipProcessorWindow;
 
 import javax.swing.*;
 

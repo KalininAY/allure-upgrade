@@ -5,7 +5,7 @@ import at.allure.upgrade.core.Zip;
 import java.util.Optional;
 
 public abstract class AllureUtils {
-
+//TODO: MVC-MVVM
     public static boolean isAllureZip(Zip zip) {
         return zip.files.containsKey("bin/allure");
     }

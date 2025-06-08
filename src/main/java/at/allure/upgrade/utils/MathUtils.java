@@ -12,7 +12,7 @@ public abstract class MathUtils {
     public static Optional<String> versionFrom(String rawString) {
         Matcher version = VERSION_PATTERN.matcher(rawString);
         if (version.find())
-            return Optional.of(version.group());
+            return Optional.of(version.group(1));
         return Optional.empty();
     }
 

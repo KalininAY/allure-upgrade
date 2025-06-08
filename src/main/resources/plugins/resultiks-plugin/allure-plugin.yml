@@ -1,0 +1,9 @@
+id: resultiks
+name: Resultiks aggregator
+description: The aggregator adds resultiks to the report
+extensions:
+  - io.qameta.allure.resultiks.ResultiksPlugin
+jsFiles:
+  - index.js
+cssFiles:
+  - styles.css

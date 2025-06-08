@@ -1,15 +1,14 @@
 package at.allure.upgrade.utils;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.UnaryOperator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -24,29 +23,50 @@ public abstract class ZipUtils {
         }
     }
 
-    public static Map<String, byte[]> readFiles(Path zip) {
-        Map<String, byte[]> map = new LinkedHashMap<>();
-        try (InputStream inputStream = new ZipInputStream(Files.newInputStream(zip));
-             ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
+    public static class ZipContent {
+        public final Map<String, byte[]> files;
+        public final String rootDir;
+        public ZipContent(Map<String, byte[]> files, String rootDir) {
+            this.files = files;
+            this.rootDir = rootDir;
+        }
+    }
 
+    public static ZipContent readFiles(Path zip) {
+        Map<String, byte[]> map = new LinkedHashMap<>();
+        String rootDir = null;
+        try (InputStream inputStream = Files.newInputStream(zip);
+             ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
                 if (entry.isDirectory())
                     continue;
-                map.put(entry.getName(), readStreamToByteArray(zipInputStream));
+                Path inZipPath = Paths.get(entry.getName());
+                if (rootDir == null && inZipPath.getNameCount() > 1) {
+                    rootDir = inZipPath.getName(0).toString();
+                }
+                if (inZipPath.getNameCount() > 1 && rootDir != null && inZipPath.getName(0).toString().equals(rootDir)) {
+                    String nameInZip = inZipPath.subpath(1, inZipPath.getNameCount()).toString();
+                    map.put(nameInZip, readStreamToByteArray(zipInputStream));
+                } else {
+                    // если нет rootDir, кладём как есть
+                    map.put(inZipPath.toString(), readStreamToByteArray(zipInputStream));
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return map;
+        if (rootDir == null) rootDir = "";
+        return new ZipContent(map, rootDir);
     }
 
-    public static void save(Path path, Map<String, byte[]> files) throws IOException {
+    public static void save(Path path, Map<String, byte[]> files, String rootDir) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
             files.forEach((pathName, bytes) -> {
                 try {
-                    ZipEntry newEntry = new ZipEntry(pathName);
+                    String entryName = rootDir.isEmpty() ? pathName : rootDir + "/" + pathName;
+                    ZipEntry newEntry = new ZipEntry(entryName);
                     zipOutputStream.putNextEntry(newEntry);
                     zipOutputStream.write(bytes);
                     zipOutputStream.closeEntry();
@@ -74,6 +94,18 @@ public abstract class ZipUtils {
             byteArrayOutputStream.write(buffer, 0, length);
         }
         return byteArrayOutputStream.toByteArray();
+    }
+
+    public static Path update(Path path) {
+        String fileName = path.getFileName().toString();
+        int dotIdx = fileName.lastIndexOf('.');
+        String newName;
+        if (dotIdx > 0) {
+            newName = fileName.substring(0, dotIdx) + "-with-resultiks" + fileName.substring(dotIdx);
+        } else {
+            newName = fileName + "-with-resultiks";
+        }
+        return path.getParent().resolve(newName);
     }
 
 }
