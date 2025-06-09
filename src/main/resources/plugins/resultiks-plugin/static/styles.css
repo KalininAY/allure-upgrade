@@ -1,0 +1,60 @@
+/**
+ *
+ * Метки на тестах в списке
+ *
+ */
+
+.node .y-label_status_unknown {
+    border-radius: 9px;
+}
+
+.node .status-toggle__item {
+     padding: 0px 15px;
+}
+
+.node .status-toggle__item span {
+     padding: 1px 3px;
+}
+
+
+/* прячет UNKNOWN-статус в фильтре над списком тестов */
+.tree__filter [data-status="unknown"] {
+  display: none;
+}
+
+
+
+
+/**
+ *
+ * Виджет
+ *
+ */
+
+[data-id="resultiks"] .widget__flex-line {
+    margin-bottom: 0.5em;
+}
+
+
+#triangle text {
+    font-size: 2.7em;
+    box-sizing: border-box;
+    text-anchor: middle;
+    fill: black;
+}
+
+/**
+ *  Анимированное заполнение рамки
+ */
+#triangle path {
+    fill: transparent;
+    stroke-dasharray: 550;
+    stroke-dashoffset: 530;
+    animation: animate .7s forwards linear;
+}
+
+@keyframes animate {
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
