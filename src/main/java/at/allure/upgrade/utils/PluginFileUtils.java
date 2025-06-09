@@ -77,22 +77,24 @@ public abstract class PluginFileUtils {
         result.add(new PluginFile.FromPath(PLUGIN_DIR.resolve(PLUGIN_YML), pluginYml));
 
         if (jarName != null) {
-            Path jarPath = files.get(jarName);
-            if (!Files.exists(jarPath)) {
-                throw new RuntimeException("Не найден jar-файл: " + jarPath);
-            }
+            Path jarPath = getValidPath(jarName, files);
             result.add(new PluginFile.FromPath(PLUGIN_DIR.resolve(jarName), jarPath));
         }
 
         for (String jsOrCss : staticFiles) {
-            Path path = files.get(jsOrCss);
-            if (!Files.exists(path)) {
-                throw new RuntimeException("Не найден файл: " + path);
-            }
+            Path path = getValidPath(jsOrCss, files);
             result.add(new PluginFile.FromPath(PLUGIN_DIR.resolve(STATIC_DIR).resolve(jsOrCss), path));
         }
 
         return result;
+    }
+
+    private static Path getValidPath(String fileName, Map<String, Path> files) {
+        Path p = files.get(fileName);
+        if (p == null || !Files.exists(p)) {
+            throw new RuntimeException("Не найден файл, указанный в " + PLUGIN_YML + ": " + fileName);
+        }
+        return p;
     }
 
     private static String findJarName(Map<String, Path> files, List<String> lines) {
