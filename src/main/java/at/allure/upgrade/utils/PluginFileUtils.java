@@ -74,14 +74,14 @@ public abstract class PluginFileUtils {
         List<String> staticFiles = findStaticFiles(lines);
 
         List<PluginFile> result = new ArrayList<>();
-        result.add(new PluginFile(PLUGIN_PREFIX + PLUGIN_YML, pluginYml));
+        result.add(new PluginFile.FromPath(PLUGIN_DIR.resolve(PLUGIN_YML), pluginYml));
 
         if (jarName != null) {
             Path jarPath = files.get(jarName);
             if (!Files.exists(jarPath)) {
                 throw new RuntimeException("Не найден jar-файл: " + jarPath);
             }
-            result.add(new PluginFile(PLUGIN_PREFIX + jarName, jarPath));
+            result.add(new PluginFile.FromPath(PLUGIN_DIR.resolve(jarName), jarPath));
         }
 
         for (String jsOrCss : staticFiles) {
@@ -89,7 +89,7 @@ public abstract class PluginFileUtils {
             if (!Files.exists(path)) {
                 throw new RuntimeException("Не найден файл: " + path);
             }
-            result.add(new PluginFile(PLUGIN_PREFIX + STATIC_DIR + jsOrCss, path));
+            result.add(new PluginFile.FromPath(PLUGIN_DIR.resolve(STATIC_DIR).resolve(jsOrCss), path));
         }
 
         return result;
@@ -131,8 +131,8 @@ public abstract class PluginFileUtils {
         Path resPath = Paths.get(dirURL.toURI());
         try (Stream<Path> stream = Files.walk(resPath)) {
             stream.filter(Files::isRegularFile).forEach(path -> {
-                String inZipName = resPath.getParent().relativize(path).toString();
-                result.add(new PluginFile(inZipName, path));
+                Path inZipPath = resPath.getParent().relativize(path);
+                result.add(new PluginFile.FromPath(inZipPath, path));
             });
         }
         return result;
@@ -146,7 +146,7 @@ public abstract class PluginFileUtils {
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
                 if (entry.getName().startsWith("plugins/") && !entry.isDirectory()) {
-                    result.add(new PluginFile(entry.getName(), entry.getName()));
+                    result.add(new PluginFile.FromResources(Paths.get(entry.getName())));
                 }
             }
         }

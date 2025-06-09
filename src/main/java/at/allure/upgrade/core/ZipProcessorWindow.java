@@ -304,8 +304,8 @@ public class ZipProcessorWindow extends JFrame {
                     int progressRange = endProgress - startProgress;
                     int fileIndex = 0;
                     for (PluginFile pf : pluginFiles) {
-                        print("Добавление файла: " + pf.inZipName);
-                        zip.add(pf.inZipName, pf.getBytes());
+                        print("Добавление файла: " + pf.inZipPath);
+                        zip.add(pf.inZipPath, pf.getBytes());
                         int progress = startProgress + (int)(((double)++fileIndex / totalFiles) * progressRange);
                         publish(progress);
                     }
@@ -321,7 +321,7 @@ public class ZipProcessorWindow extends JFrame {
             private boolean updateConfigFile() {
                 print("Обновление конфигурационного файла " + ALLURE_CONFIG + "...");
                 try {
-                    zip.update(
+                    zip.updateContent(
                         ALLURE_CONFIG,
                         content -> {
                             if (content.contains(PLUGIN_ROW)) {
@@ -362,10 +362,10 @@ public class ZipProcessorWindow extends JFrame {
                 print("Проверка изменений в архиве...");
                 try {
                     Zip zipBefore = new Zip(zip.path);
-                    Set<String> initialFiles = zipBefore.files.keySet();
-                    Set<String> pluginFileNames = pluginFiles.stream().map(pf -> pf.inZipName).collect(Collectors.toSet());
+                    Set<Path> initialFiles = zipBefore.files.keySet();
+                    Set<Path> pluginFileNames = pluginFiles.stream().map(pf -> pf.inZipPath).collect(Collectors.toSet());
                     Zip zipAfter = new Zip(ZipUtils.update(zip.path));
-                    Set<String> resultFiles = zipAfter.files.keySet();
+                    Set<Path> resultFiles = zipAfter.files.keySet();
 
                     boolean allPluginFilesPresent = pluginFileNames.stream().allMatch(resultFiles::remove);
                     boolean onlyPluginFilesAdded = initialFiles.equals(resultFiles);
@@ -378,7 +378,7 @@ public class ZipProcessorWindow extends JFrame {
                     print("Внимание: не все файлы плагина найдены в архиве или список файлов не изменился!");
                     if (!allPluginFilesPresent) {
                         errorMessage = "Отсутствуют файлы плагина: " +
-                                pluginFileNames.stream().filter(f -> !resultFiles.contains(f)).collect(Collectors.joining(", "));
+                                pluginFileNames.stream().filter(f -> !resultFiles.contains(f)).map(Path::toString).collect(Collectors.joining(", "));
                         publish(-1);
                     }
                     if (!onlyPluginFilesAdded) {
@@ -394,12 +394,11 @@ public class ZipProcessorWindow extends JFrame {
             }
 
             @Override
-            protected void process(java.util.List<Integer> chunks) {
+            protected void process(List<Integer> chunks) {
                 for (Integer progress : chunks) {
                     if (progress == -1) {
                         // Ошибка валидации
                         progressBar.setVisible(false);
-                        setStatusError(errorMessage != null ? errorMessage : "Выбран неподходящий файл");
                         selectFileButton.setEnabled(true);
                         selectFileButton.setVisible(true);
                         printError(errorMessage != null ? errorMessage : "Выбран неподходящий файл");

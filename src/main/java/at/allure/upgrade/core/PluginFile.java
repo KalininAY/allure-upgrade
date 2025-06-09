@@ -7,55 +7,37 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * Вспомогательный класс для хранения информации о файле плагина
  */
-public class PluginFile {
+public abstract class PluginFile {
     public static final String PLUGIN_ID = "id: resultiks";
     public static final String PLUGIN_YML = "allure-plugin.yml";
-    public static final String PLUGIN_PREFIX = "plugins/resultiks-plugin/";
-    public static final String STATIC_DIR = "static/";
+    public static final Path PLUGIN_DIR = Paths.get("plugins", "resultiks-plugin");
+    public static final Path STATIC_DIR = Paths.get("static");
 
-    final String inZipName;
-    final Path filePath; // если файл на диске
-    final String resourcePath; // если файл в jar
+    public final Path inZipPath;
 
-    public PluginFile(String inZipName, Path filePath) {
-        this.inZipName = inZipName;
-        this.filePath = filePath;
-        this.resourcePath = null;
+    protected PluginFile(Path inZipPath) {
+        this.inZipPath = inZipPath;
     }
 
-    public PluginFile(String inZipName, String resourcePath) {
-        this.inZipName = inZipName;
-        this.filePath = null;
-        this.resourcePath = resourcePath;
-    }
+    /**
+     * Читает содержимое файла
+     */
+    public abstract List<String> readLines() throws IOException;
+
+    public abstract byte[] getBytes() throws IOException;
 
     /**
      * Проверяет, является ли файл конфигурацией плагина
      */
     public boolean isPluginYml() {
-        return inZipName.endsWith("/" + PLUGIN_YML);
-    }
-
-    /**
-     * Читает содержимое файла (с диска или из ресурсов)
-     */
-    public List<String> readLines() throws IOException {
-        if (filePath != null) {
-            return Files.readAllLines(filePath);
-        } else if (resourcePath != null) {
-            try (InputStream is = PluginFile.class.getClassLoader().getResourceAsStream(resourcePath)) {
-                if (is == null) throw new IOException("Не найден ресурс: " + resourcePath);
-                byte[] bytes = ZipUtils.readStreamToByteArray(is);
-                return Arrays.asList(new String(bytes).split("\\s*\n"));
-            }
-        }
-        throw new IOException("Неизвестный тип файла");
+        return inZipPath.getFileName().toString().equals(PLUGIN_YML);
     }
 
     /**
@@ -69,26 +51,75 @@ public class PluginFile {
         }
     }
 
-    public byte[] getBytes() throws IOException {
-        if (filePath != null) {
-            return Files.readAllBytes(filePath);
 
-        } else if (resourcePath != null) {
+    /**
+     * если файл на диске
+     */
+    public static class FromPath extends PluginFile {
+        final Path filePath;
+
+
+        public FromPath(Path inZipPath, Path filePath) {
+            super(inZipPath);
+            assert filePath != null;
+            this.filePath = filePath;
+        }
+
+        public List<String> readLines() throws IOException {
+            return Files.readAllLines(filePath);
+        }
+
+        public byte[] getBytes() throws IOException {
+            return Files.readAllBytes(filePath);
+        }
+
+        @Override
+        public String toString() {
+            return "PluginFile.FromPath{" +
+                    "inZipPath='" + inZipPath + '\'' +
+                    ", filePath=" + filePath +
+                    '}';
+        }
+    }
+
+
+    /**
+     * если файл в jar
+     */
+    public static class FromResources extends PluginFile {
+        final String resourcePath;
+
+
+        public FromResources(Path resourcePath) {
+            super(resourcePath);
+            assert resourcePath != null;
+            this.resourcePath = resourcePath.toString().replace("\\", "/"); // независимо от ОС
+        }
+
+        public List<String> readLines() throws IOException {
+            try (InputStream is = PluginFile.class.getClassLoader().getResourceAsStream(resourcePath)) {
+                if (is == null)
+                    throw new IOException("Не найден ресурс: " + resourcePath);
+                byte[] bytes = ZipUtils.readStreamToByteArray(is);
+                return Arrays.asList(new String(bytes).split("\\s*\n"));
+            }
+        }
+
+        public byte[] getBytes() throws IOException {
             try (InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
                 if (is == null)
                     throw new IOException("Не найден ресурс: " + resourcePath);
                 return ZipUtils.readStreamToByteArray(is);
             }
         }
-        throw new IllegalStateException("Файл не в директории и не в ресурсах " + this);
+
+        @Override
+        public String toString() {
+            return "PluginFile.FromResources{" +
+                    "inZipPath='" + inZipPath + '\'' +
+                    ", resourcePath=" + resourcePath +
+                    '}';
+        }
     }
 
-    @Override
-    public String toString() {
-        return "PluginFile{" +
-                "inZipName='" + inZipName + '\'' +
-                ", filePath=" + filePath +
-                ", resourcePath='" + resourcePath + '\'' +
-                '}';
-    }
 }
