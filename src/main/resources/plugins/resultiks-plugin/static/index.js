@@ -214,8 +214,48 @@ observer.observe(document.body, { childList: true, subtree: true });
         }
     });
 
+    /**
+     * Рекурсивно ищет тест с заданным uid в дереве
+     *
+     * @param {Object} tree - Структура дерева (JSON-объект)
+     * @param {string} targetUid - Искомый uid
+     * @returns {Object|null} - Найденный тест или null, если тест не найден
+     */
+    function findTestByUid(tree, targetUid) {
+        // Проверяем, есть ли в текущем узле поле 'uid' и совпадает ли оно с искомым
+        if (tree.uid === targetUid) {
+            return tree;
+        }
+
+        // Если есть дочерние элементы, рекурсивно ищем в них
+        if (tree.children && Array.isArray(tree.children)) {
+            for (const child of tree.children) {
+                const result = findTestByUid(child, targetUid);
+                if (result !== null) {
+                    return result;
+                }
+            }
+        }
+
+        // Если ничего не найдено, возвращаем null
+        return null;
+    }
+
+    window.openTestWithResultiks = function() {
+        let uid = window.allure.resultiks?.find(t => t.resultiksCount)?.uid;
+        if (!uid) return;
+        const path = location.pathname.endsWith('/') ? location.pathname : '/';
+        fetch(path + 'data/suites.json')
+            .then(response => response.json())
+            .then(tree => {
+                let parentUid = findTestByUid(tree, uid)?.parentUid;
+                if (parentUid)
+                    window.location.hash = `#suites/${parentUid}/${uid}/`;
+            });
+    }
+    
     var resultiksTemplate = function(data) {
-        return `<div class="widget__flex-line">
+        return `<div class="widget__flex-line" onclick="openTestWithResultiks()">
                     <div class="widget__column">
                         <div style="height: 50%;">
                             <h2 class="widget__title">RESULTIKS</h2>
