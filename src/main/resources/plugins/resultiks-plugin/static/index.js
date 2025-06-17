@@ -1,8 +1,8 @@
 'use strict';
 
 /**
- * Загружает данные resultiks из файла resultiks.json с кэшированием.
- * @returns {Promise<Array>} Промис с массивом тестов.
+ * Загружает данные resultiks из файла resultiks.json с кэшированием
+ * @returns {Promise<Array>} Промис с массивом тестов
  */
 function fetchResultiks() {
     const path = location.pathname.endsWith('/') ? location.pathname : '/';
@@ -16,25 +16,25 @@ function fetchResultiks() {
 }
 
 /**
- * Возвращает массив DOM-элементов тестов (a.node).
- * @returns {Array<Element>} Массив ссылок на тесты.
+ * Возвращает массив DOM-элементов тестов (a.node)
+ * @returns {Array<Element>} Массив ссылок на тесты
  */
 function testNodes() {
     return [...document.body.querySelectorAll('a.node')];
 }
 
 /**
- * Проверяет, отмечен ли тест специальной меткой.
- * @param {Element} aNode - DOM-элемент теста.
- * @returns {boolean} true, если тест уже отмечен.
+ * Проверяет, отмечен ли тест специальной меткой
+ * @param {Element} aNode - DOM-элемент теста
+ * @returns {boolean} true, если тест уже отмечен
  */
 function isMarked(aNode) {
     return !!aNode.querySelector('.y-label_status_unknown');
 }
 
 /**
- * Проверяет, есть ли на странице тесты.
- * @returns {boolean} true, если есть хотя бы один тест.
+ * Проверяет, есть ли на странице тесты
+ * @returns {boolean} true, если есть хотя бы один тест
  */
 function pageHaveTests() {
     return !!document.body.querySelector('a.node');
@@ -43,16 +43,16 @@ function pageHaveTests() {
 const TOOLTIP = 'Resultiks count';
 
 /**
- * Добавляет к тесту метку с количеством resultiks.
- * @param {Element} testNode - DOM-элемент теста.
- * @param {number} resultiksCount - Количество resultiks для теста.
+ * Добавляет к тесту метку с количеством resultiks
+ * @param {Element} testNode - DOM-элемент теста
+ * @param {number} resultiksCount - Количество resultiks для теста
  */
 function mark(testNode, resultiksCount) {
     if (!resultiksCount)
         return;
     if (isMarked(testNode))
         return;
-    let mark = document.querySelector('.y-label_status_unknown')?.parentNode?.cloneNode(true);
+    let mark = document.querySelector('[class*=label_status_unknown]')?.parentNode?.cloneNode(true);
     if (!mark)
         return;
     let span = mark.querySelector('span');
@@ -62,8 +62,8 @@ function mark(testNode, resultiksCount) {
 }
 
 /**
- * Отмечает все тесты на странице, у которых есть resultiks.
- * @returns {Promise<void>} Промис, который резолвится после разметки.
+ * Отмечает все тесты на странице, у которых есть resultiks
+ * @returns {Promise<void>} Промис, который резолвится после разметки
  */
 function markTests() {
     return fetchResultiks().then(tests => {
@@ -77,7 +77,7 @@ function markTests() {
 }
 
 /**
- * Считает сумму resultiks в группе и отмечает группу.
+ * Считает сумму resultiks в группе и отмечает группу
  */
 function markGroups() {
     document.querySelectorAll('span.node__stats').forEach(groupMark => {
@@ -89,19 +89,19 @@ function markGroups() {
 }
 
 /**
- * Проверяет, нужно ли удалить или переместить виджет resultiks.
+ * Проверяет, нужно ли удалить или переместить виджет resultiks
  * @type {Object}
  */
 let widget0 = {
     /**
-     * Возвращает корневой элемент сетки виджетов.
+     * Возвращает корневой элемент сетки виджетов
      * @returns {Element|null}
      */
     root() {
         return document.querySelector('.widgets-grid');
     },
     /**
-     * Возвращает DOM-элемент виджета resultiks.
+     * Возвращает DOM-элемент виджета resultiks
      * @returns {Element|null}
      */
     element() {
@@ -115,8 +115,8 @@ let widget0 = {
         return !!this.element();
     },
     /**
-     * Проверяет, нужно ли удалить виджет (если нет тестов с resultiksCount > 0).
-     * @returns {Promise<boolean>} true, если нужно удалить.
+     * Проверяет, нужно ли удалить виджет (если нет тестов с resultiksCount > 0)
+     * @returns {Promise<boolean>} true, если нужно удалить
      */
     checkIfMustBeDeleted() {
         // Проверяем, нужно ли удалять виджет (например, если нет тестов с resultiksCount > 0)
@@ -125,7 +125,7 @@ let widget0 = {
         });
     },
     /**
-     * Проверяет, нужно ли переместить виджет выше (на второе место).
+     * Проверяет, нужно ли переместить виджет выше (на второе место)
      * @returns {boolean}
      */
     needsToMoveUp() { // ожидается порядок виджетов: summary, resultiks, suites, ...
@@ -134,11 +134,24 @@ let widget0 = {
         return widgets.indexOf(this.element()) !== 1; // Виджет должен быть вторым
     },
     /**
-     * Перемещает или удаляет виджет resultiks, если это необходимо.
+     * Проверяет, что главная страница только открылась
+     * @returns {boolean} - true: открытие отчета, нажатие "Домой", нажатие Overview
+     */
+    mainPageJustOpened() {
+        let prev = this.prevHash;
+        let current = window.location.hash;
+        this.prevHash = current;
+        return typeof prev === 'undefined' || prev !== current;
+    },
+    /**
+     * Перемещает или удаляет виджет resultiks, если это необходимо
      * @returns {Promise<void>}
      */
     async moveUpOrDelete() {
-        if (this.isAlreadyMoved) return;
+        if (this.mainPageJustOpened())
+            delete this.isAlreadyMoved;
+        if (this.isAlreadyMoved)
+            return;
         try {
             // Проверяем, нужно ли удалить виджет
             const mustBeDeleted = await this.checkIfMustBeDeleted();
@@ -160,12 +173,12 @@ let widget0 = {
 };
 
 /**
- * Объект для разметки тестов resultiks на странице.
+ * Объект для разметки тестов resultiks на странице
  * @type {Object}
  */
 let resultikMarks0 = {
     /**
-     * Устанавливает метки на тесты, если это необходимо.
+     * Устанавливает метки на тесты, если это необходимо
      */
     setUp() {
         if (typeof this.hasResultiks === 'undefined') // пока не известно, есть ли тесты с resultiksCount > 0
@@ -288,7 +301,6 @@ observer.observe(document.body, { childList: true, subtree: true });
         render() {
             if (this.model.get('total') === 0) {
                 this.$el.empty(); // Очищаем содержимое виджета
-                widget0.element().remove();
                 return this;
             }
             return super.render();
