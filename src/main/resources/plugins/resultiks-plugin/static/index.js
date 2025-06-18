@@ -52,7 +52,7 @@ function mark(testNode, resultiksCount) {
         return;
     if (isMarked(testNode))
         return;
-    let mark = document.querySelector('[class*=label_status_unknown]')?.parentNode?.cloneNode(true);
+    let mark = document.querySelector('[class*="label_status_unknown"]')?.parentNode?.cloneNode(true);
     if (!mark)
         return;
     let span = mark.querySelector('span');
