@@ -4,6 +4,7 @@ import at.allure.upgrade.core.PluginFile;
 
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -142,7 +143,8 @@ public abstract class PluginFileUtils {
 
     private static List<PluginFile> fromJar(URL dirURL) throws Exception {
         List<PluginFile> result = new ArrayList<>();
-        String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!"));
+        String jarPath = URLDecoder.decode(dirURL.getPath(), "UTF-8");
+        jarPath = jarPath.substring(5, jarPath.indexOf("!"));
         try (JarFile jar = new JarFile(jarPath)) {
             Enumeration<JarEntry> entries = jar.entries();
             while (entries.hasMoreElements()) {
