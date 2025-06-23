@@ -3,7 +3,6 @@ package at.allure.upgrade.core;
 import at.allure.upgrade.utils.AllureUtils;
 import at.allure.upgrade.utils.ListUtils;
 import at.allure.upgrade.utils.PluginFileUtils;
-import at.allure.upgrade.utils.ZipUtils;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -364,7 +363,7 @@ public class ZipProcessorWindow extends JFrame {
                     Zip zipBefore = new Zip(zip.path);
                     Set<Path> initialFiles = zipBefore.files.keySet();
                     Set<Path> pluginFileNames = pluginFiles.stream().map(pf -> pf.inZipPath).collect(Collectors.toSet());
-                    Zip zipAfter = new Zip(ZipUtils.update(zip.path));
+                    Zip zipAfter = new Zip(AllureUtils.update(zip.path));
                     Set<Path> resultFiles = zipAfter.files.keySet();
 
                     boolean allPluginFilesPresent = pluginFileNames.stream().allMatch(resultFiles::remove);
@@ -423,9 +422,9 @@ public class ZipProcessorWindow extends JFrame {
                     if (progressBar.getValue() == 100) {
                         // Успешное завершение
                         progressBar.setVisible(false);
-                        statusLabel.setText("Создан файл: " + ZipUtils.update(zip.path).getFileName());
+                        statusLabel.setText("Создан файл: " + AllureUtils.update(zip.path).getFileName());
                         successIcon.setVisible(true);
-                        print("Создан файл: " + ZipUtils.update(zip.path));
+                        print("Создан файл: " + AllureUtils.update(zip.path));
                         print("Обработка завершена успешно!");
                     }
                 } catch (Exception ex) {

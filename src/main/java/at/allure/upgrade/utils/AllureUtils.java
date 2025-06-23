@@ -67,4 +67,20 @@ public abstract class AllureUtils {
         };
     }
 
+    public static Path update(Path path) {
+        String postfix = System.getProperty("Updated.allure.name.postfix", "with-resultiks");
+        String fileName = path.getFileName().toString();
+        Matcher version = VERSION_PATTERN.matcher(fileName);
+        if (version.find()) {
+            if (postfix.startsWith("-")) // в начале дефис будет из оригинального названия
+                postfix = postfix.substring(1);
+            if (!postfix.endsWith("-")) // в конце дефис необходим
+                postfix += '-';
+            int versionPos = version.start(1);
+            String newName = fileName.substring(0, versionPos) + postfix + fileName.substring(versionPos);
+            return path.getParent().resolve(newName);
+        }
+        return path;
+    }
+
 }

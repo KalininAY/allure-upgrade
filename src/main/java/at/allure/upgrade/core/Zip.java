@@ -1,5 +1,6 @@
 package at.allure.upgrade.core;
 
+import at.allure.upgrade.utils.AllureUtils;
 import at.allure.upgrade.utils.ZipUtils;
 
 import java.io.IOException;
@@ -63,7 +64,7 @@ public class Zip {
     }
 
     public void save() {
-        Path newPath = ZipUtils.update(path);
+        Path newPath = AllureUtils.update(path);
         try {
             ZipUtils.save(newPath, files, rootDir);
         } catch (IOException e) {

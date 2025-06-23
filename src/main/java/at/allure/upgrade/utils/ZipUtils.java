@@ -50,17 +50,4 @@ public abstract class ZipUtils {
         return byteArrayOutputStream.toByteArray();
     }
 
-    public static Path update(Path path) {
-        final String postfix = System.getProperty("Updated.zip.name.postfix", "-with-resultiks");
-        String fileName = path.getFileName().toString();
-        int dotIdx = fileName.lastIndexOf('.');
-        String newName;
-        if (dotIdx > 0) {
-            newName = fileName.substring(0, dotIdx) + postfix + fileName.substring(dotIdx);
-        } else {
-            newName = fileName + postfix;
-        }
-        return path.getParent().resolve(newName);
-    }
-
 }
